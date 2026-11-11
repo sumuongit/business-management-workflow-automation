@@ -1,0 +1,784 @@
+{
+  "name": "Integration & Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "format": "resolved",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailReadImap",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "af47aece-a7d5-44e4-91f0-bd19581512ca",
+      "name": "Email Trigger (IMAP)",
+      "credentials": {
+        "imap": {
+          "id": "aSFLL7NvDWydIBSy",
+          "name": "IMAP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "binaryPropertyName": "attachment_0",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.2,
+      "position": [
+        448,
+        -96
+      ],
+      "id": "c087c662-6177-43e3-a4ec-c782c7dfc5ae",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "text": "={{ $json.text }}",
+        "attributes": {
+          "attributes": [
+            {
+              "name": "supplier_name",
+              "description": "Supplier or vendor name shown on the invoice"
+            },
+            {
+              "name": "invoice_reference",
+              "description": "Unique invoice or document reference"
+            },
+            {
+              "name": "invoice_date",
+              "type": "date",
+              "description": "Invoice date in YYYY-MM-DD format"
+            },
+            {
+              "name": "project_name",
+              "description": "Construction project associated with the invoice"
+            },
+            {
+              "name": "amount",
+              "type": "number",
+              "description": "Invoice amount as a number, without currency symbols"
+            },
+            {
+              "name": "currency",
+              "description": "Currency code, such as BDT or USD or EUR"
+            },
+            {
+              "name": "payment_status",
+              "description": "Paid or Unpaid"
+            },
+            {
+              "name": "due_date",
+              "type": "date",
+              "description": "Payment due date in YYYY-MM-DD format"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.informationExtractor",
+      "typeVersion": 1.2,
+      "position": [
+        672,
+        -96
+      ],
+      "id": "4d926de6-ab9b-4811-8407-3a63e2738417",
+      "name": "Information Extractor"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "8f509bbb-820a-426d-9046-c43ac3ea8955",
+              "leftValue": "={{ !!$binary.attachment_0 }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        224,
+        0
+      ],
+      "id": "22246c9a-35e7-4024-b777-2f70cb50e4e7",
+      "name": "If an Attachment Available"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "getAll",
+        "dataSourceId": {
+          "__rl": true,
+          "value": "40d0456c-982a-80cb-8d55-000b10ec9b74",
+          "mode": "list",
+          "cachedResultName": "Suppliers",
+          "cachedResultUrl": "https://app.notion.com/p/40d0456c982a8098b408c63b4d748ed6"
+        },
+        "filterType": "manual",
+        "filters": {
+          "conditions": [
+            {
+              "key": "Name|title",
+              "condition": "equals",
+              "richTextValue": "={{ $('Information Extractor').item.json.output.supplier_name }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        1248,
+        -192
+      ],
+      "id": "081f1c30-e3f5-4a85-9e6a-06cdf5657610",
+      "name": "Suppliers Database",
+      "credentials": {
+        "notionApi": {
+          "id": "xxxxxxxx",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "getAll",
+        "dataSourceId": {
+          "__rl": true,
+          "value": "40d0456c-982a-8011-8b70-000b47f37352",
+          "mode": "list",
+          "cachedResultName": "Projects",
+          "cachedResultUrl": "https://app.notion.com/p/40d0456c982a803db2efe9ff84edffb7"
+        },
+        "filterType": "manual",
+        "filters": {
+          "conditions": [
+            {
+              "key": "Name|title",
+              "condition": "equals",
+              "richTextValue": "={{ $('Information Extractor').item.json.output.project_name }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        1696,
+        -288
+      ],
+      "id": "ae919e83-4f26-439f-b16c-2f03b4ecad95",
+      "name": "Projects Database",
+      "credentials": {
+        "notionApi": {
+          "id": "xxxxxxxx",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "fd2f2d12-60ad-4ccf-a422-76aa2010cc79",
+              "leftValue": "={{ !!$json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        1472,
+        -192
+      ],
+      "id": "1b105050-3be7-45cf-a545-1ad31b400c14",
+      "name": "If the Supplier Found"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "897124d3-4d83-417c-a17b-e8c688e9c4e5",
+              "leftValue": "={{ !!$json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        1920,
+        -288
+      ],
+      "id": "844682e5-954f-4844-9167-75c35d1f9cfe",
+      "name": "If the Project Found"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "bc30b870-e6c3-4b45-b170-70f6d991f364",
+              "leftValue": "={{\n  !!(\n    $json.output.supplier_name &&\n    $json.output.invoice_reference &&\n    $json.output.invoice_date &&\n    $json.output.project_name &&\n    Number($json.output.amount) > 0 &&\n    $json.output.currency &&\n    $json.output.payment_status &&\n    $json.output.due_date\n  )\n}}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        1024,
+        -96
+      ],
+      "id": "f699b907-a5d2-4650-a784-99aab3625331",
+      "name": "If the Invoice is Valid"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        864,
+        224
+      ],
+      "id": "6f26d8ab-66ab-4099-80e6-f7e68270482f",
+      "name": "Chat Model to Interpret the Invoice",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "yyyyyyyy",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "getAll",
+        "dataSourceId": {
+          "__rl": true,
+          "value": "40e0456c-982a-80a8-8f7d-000b14056eb9",
+          "mode": "list",
+          "cachedResultName": "Costs",
+          "cachedResultUrl": "https://app.notion.com/p/40e0456c982a80e8b6edc37ccc550552"
+        },
+        "filterType": "manual",
+        "filters": {
+          "conditions": [
+            {
+              "key": "Invoice Reference|title",
+              "condition": "equals",
+              "richTextValue": "={{ $('Information Extractor').item.json.output.invoice_reference }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        2144,
+        -384
+      ],
+      "id": "224094eb-3e70-4b18-a4ca-a287997a6c50",
+      "name": "Costs Database",
+      "alwaysOutputData": true,
+      "credentials": {
+        "notionApi": {
+          "id": "xxxxxxxx",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "c05afdf0-506c-4c85-8ae4-e9e6c726cb7e",
+              "leftValue": "={{ !!$json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        2368,
+        -384
+      ],
+      "id": "853a5327-d8ac-427b-9a16-07865f181bac",
+      "name": "If Duplicate Item Found"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $('Costs Database').first().json.id }}",
+          "mode": "id"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Invoice Reference|title",
+              "title": "={{ $('Information Extractor').item.json.output.invoice_reference }}"
+            },
+            {
+              "key": "Invoice Date|date",
+              "includeTime": false,
+              "date": "={{ $('Information Extractor').item.json.output.invoice_date }}"
+            },
+            {
+              "key": "Amount|number",
+              "numberValue": "={{ $('Information Extractor').item.json.output.amount }}"
+            },
+            {
+              "key": "Currency|select",
+              "selectValue": "={{ $('Information Extractor').item.json.output.currency }}"
+            },
+            {
+              "key": "Payment Status|select",
+              "selectValue": "={{ $('Information Extractor').item.json.output.payment_status }}"
+            },
+            {
+              "key": "Due Date|date",
+              "includeTime": false,
+              "date": "={{ $('Information Extractor').item.json.output.due_date }}"
+            },
+            {
+              "key": "Processing Status|select",
+              "selectValue": "Processed"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        2592,
+        -480
+      ],
+      "id": "675cae69-a218-4349-872c-8a98120b6179",
+      "name": "Update an Existing Invoice",
+      "credentials": {
+        "notionApi": {
+          "id": "xxxxxxxx",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "dataSourceId": {
+          "__rl": true,
+          "value": "40e0456c-982a-80a8-8f7d-000b14056eb9",
+          "mode": "list",
+          "cachedResultName": "Costs",
+          "cachedResultUrl": "https://app.notion.com/p/40e0456c982a80e8b6edc37ccc550552"
+        },
+        "title": "={{ $('Information Extractor').item.json.output.invoice_reference }}",
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Supplier|relation",
+              "relationValue": [
+                "={{ $('Suppliers Database').first().json.id }}"
+              ]
+            },
+            {
+              "key": "Project|relation",
+              "relationValue": [
+                "={{ $('Projects Database').first().json.id }}"
+              ]
+            },
+            {
+              "key": "Invoice Date|date",
+              "includeTime": false,
+              "date": "={{ $('Information Extractor').item.json.output.invoice_date }}",
+              "timezone": "Asia/Dhaka"
+            },
+            {
+              "key": "=Amount|number",
+              "numberValue": "={{ $('Information Extractor').item.json.output.amount }}"
+            },
+            {
+              "key": "Currency|select",
+              "selectValue": "={{ $('Information Extractor').item.json.output.currency }}"
+            },
+            {
+              "key": "Payment Status|select",
+              "selectValue": "={{ $('Information Extractor').item.json.output.payment_status }}"
+            },
+            {
+              "key": "Due Date|date",
+              "includeTime": false,
+              "date": "={{ $('Information Extractor').item.json.output.due_date }}"
+            },
+            {
+              "key": "Processing Status|select",
+              "selectValue": "Processed"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        2592,
+        -288
+      ],
+      "id": "5c89523f-f749-4f66-8e84-98a28cf62001",
+      "name": "Create an Invoice Record",
+      "credentials": {
+        "notionApi": {
+          "id": "xxxxxxxx",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "YOUR_SENDER_EMAIL",
+        "toEmail": "YOUR_RECIPIENT_EMAIL",
+        "subject": "Manual Review Required - Invoice Processing",
+        "emailFormat": "text",
+        "text": "An incoming invoice could not be processed automatically.\n\nPlease review the latest n8n execution to identify the issue.\n\nPossible reasons:\n- Missing attachment\n- Incomplete or invalid invoice information\n- Supplier not found\n- Project not found\n\nManual verification is required before the invoice is recorded or updated in Project Costs.",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        2192,
+        336
+      ],
+      "id": "4839379d-e06d-43e6-b7e1-199ed3fc5bc3",
+      "name": "Send an Email for Review",
+      "webhookId": "",
+      "credentials": {
+        "smtp": {
+          "id": "",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "YOUR_SENDER_EMAIL",
+        "toEmail": "YOUR_RECIPIENT_EMAIL",
+        "subject": "Invoice Cost Recorded/Updated – Project Costs",
+        "emailFormat": "text",
+        "text": "An invoice has been successfully processed.\n\nPlease review the Project Costs record in Notion.",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        2832,
+        -384
+      ],
+      "id": "e8010d12-0628-4879-b098-53eacca587c5",
+      "name": "Send an Email to Notify Cost Recorded/Updated",
+      "webhookId": "",
+      "credentials": {
+        "smtp": {
+          "id": "",
+          "name": "SMTP account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Email Trigger (IMAP)": {
+      "main": [
+        [
+          {
+            "node": "If an Attachment Available",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Information Extractor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If an Attachment Available": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send an Email for Review",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Information Extractor": {
+      "main": [
+        [
+          {
+            "node": "If the Invoice is Valid",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Suppliers Database": {
+      "main": [
+        [
+          {
+            "node": "If the Supplier Found",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Projects Database": {
+      "main": [
+        [
+          {
+            "node": "If the Project Found",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If the Supplier Found": {
+      "main": [
+        [
+          {
+            "node": "Projects Database",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send an Email for Review",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If the Project Found": {
+      "main": [
+        [
+          {
+            "node": "Costs Database",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send an Email for Review",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If the Invoice is Valid": {
+      "main": [
+        [
+          {
+            "node": "Suppliers Database",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send an Email for Review",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chat Model to Interpret the Invoice": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Information Extractor",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Costs Database": {
+      "main": [
+        [
+          {
+            "node": "If Duplicate Item Found",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Duplicate Item Found": {
+      "main": [
+        [
+          {
+            "node": "Update an Existing Invoice",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create an Invoice Record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update an Existing Invoice": {
+      "main": [
+        [
+          {
+            "node": "Send an Email to Notify Cost Recorded/Updated",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create an Invoice Record": {
+      "main": [
+        [
+          {
+            "node": "Send an Email to Notify Cost Recorded/Updated",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true
+  },
+  "versionId": "f9604d36-6390-4800-9000-f061410411a6",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "66659fb8e2920f21f2f0d2449098755589c5bde62ae80fe3288779dbf4576d9a"
+  },
+  "nodeGroups": [],
+  "id": "VYfdP48YI2Js3kLh",
+  "tags": []
+}
